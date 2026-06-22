@@ -28,6 +28,7 @@ export default function Cart() {
     try {
       await api.delete(`/cart/${id}`);
       fetchCart();
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error removing item:', error);
     }
@@ -39,6 +40,7 @@ export default function Cart() {
     try {
       await api.put(`/cart/${id}`, { qty: newQty });
       fetchCart();
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error updating qty:', error);
     }
@@ -134,10 +136,13 @@ export default function Cart() {
                   <span className="text-xl font-black">Rp {subtotal.toLocaleString('id-ID')}</span>
                 </div>
 
-                <button className="w-full bg-black text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors flex justify-center items-center space-x-2 group">
+                <Link 
+                  to="/checkout"
+                  className="w-full bg-black text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors flex justify-center items-center space-x-2 group"
+                >
                   <span>Checkout</span>
                   <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
-                </button>
+                </Link>
               </div>
             </div>
           </div>

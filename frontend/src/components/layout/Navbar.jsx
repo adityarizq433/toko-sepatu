@@ -6,13 +6,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    const fetchCartCount = async () => {
+      try {
+        const { default: api } = await import('../../api/axios');
+        const res = await api.get('/cart');
+        const totalQty = res.data.reduce((acc, item) => acc + item.qty, 0);
+        setCartCount(totalQty);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCartCount();
+    window.addEventListener('cartUpdated', fetchCartCount);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('cartUpdated', fetchCartCount);
+    };
   }, []);
 
   const navLinks = [
@@ -78,9 +97,11 @@ export default function Navbar() {
             </Link>
             <Link to="/cart" className="relative text-foreground/80 hover:text-foreground transition-colors">
               <ShoppingBag size={20} strokeWidth={1.5} />
-              <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

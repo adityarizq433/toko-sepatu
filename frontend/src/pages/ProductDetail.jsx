@@ -53,6 +53,7 @@ export default function ProductDetail() {
         ukuran: selectedSize,
         qty: 1
       });
+      window.dispatchEvent(new Event('cartUpdated'));
       alert(`Berhasil menambahkan ${product.nama} (Ukuran: ${selectedSize}) ke Keranjang!`);
     } catch (error) {
       console.error('Error adding to cart:', error);
