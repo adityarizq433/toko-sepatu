@@ -6,14 +6,8 @@ const BrandController = {
     async getBrands(req, res) {
         try {
             const brands = await BrandModel.findAll();
-            // Prefix the logo with the server URL if it's a local upload
-            const brandsWithUrl = brands.map(brand => {
-                if (brand.logo && !brand.logo.startsWith('http')) {
-                    brand.logo = `${req.protocol}://${req.get('host')}/uploads/${brand.logo}`;
-                }
-                return brand;
-            });
-            res.json(brandsWithUrl);
+            // Cloudinary provides the full URL already, so no prefixing is needed
+            res.json(brands);
         } catch (error) {
             console.error('Error in getBrands:', error);
             res.status(500).json({ message: 'Server Error' });
@@ -26,7 +20,7 @@ const BrandController = {
             let logo = req.body.logo;
 
             if (req.file) {
-                logo = req.file.filename;
+                logo = req.file.path; // Cloudinary URL
             }
 
             if (!nama || !logo) {
@@ -56,13 +50,9 @@ const BrandController = {
 
             await BrandModel.delete(id);
 
-            // Delete logo file if it's not a URL
-            if (brand.logo && !brand.logo.startsWith('http')) {
-                const filePath = path.join(__dirname, '..', 'uploads', brand.logo);
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                }
-            }
+            // Note: Since logo is now hosted on Cloudinary, we could use the cloudinary 
+            // uploader.destroy API to delete it from the cloud, but for now we'll 
+            // just delete the record from the database to avoid breaking anything.
 
             res.json({ message: 'Brand berhasil dihapus' });
         } catch (error) {

@@ -48,8 +48,7 @@ const productController = {
 
             let gambar = req.body.gambar || '';
             if (req.file) {
-                // Konversi backslash ke slash agar URL valid
-                gambar = 'http://localhost:3000/' + req.file.path.replace(/\\/g, '/');
+                gambar = req.file.path; // Cloudinary URL
             }
 
             const productId = await ProductModel.create({ nama, brand, kategori, harga, deskripsi, gambar });
@@ -73,7 +72,7 @@ const productController = {
             let gambar = req.body.gambar || '';
             
             if (req.file) {
-                gambar = 'http://localhost:3000/' + req.file.path.replace(/\\/g, '/');
+                gambar = req.file.path; // Cloudinary URL
             } else if (!gambar) {
                 const oldProduct = await ProductModel.findById(req.params.id);
                 if (oldProduct) gambar = oldProduct.gambar;

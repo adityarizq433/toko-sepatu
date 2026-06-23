@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "duckduckgo-images-api": "^1.0.5",
@@ -16,6 +17,7 @@
     "express-validator": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
+    "multer-storage-cloudinary": "^4.0.0",
     "mysql2": "^3.10.0",
     "oracledb": "^7.0.0",
     "puppeteer": "^25.2.0",
