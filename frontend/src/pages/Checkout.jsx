@@ -3,11 +3,14 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import toast from 'react-hot-toast';
 
 export default function Checkout() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     nama: '',
     alamat: '',
@@ -19,7 +22,25 @@ export default function Checkout() {
 
   useEffect(() => {
     fetchCart();
+    
+    // Ambil data user dari local storage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser && storedUser !== 'undefined') {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      setFormData(prev => ({ ...prev, nama: parsedUser.nama || parsedUser.name || '', phone: parsedUser.no_hp || '' }));
+      fetchAddresses();
+    }
   }, []);
+
+  const fetchAddresses = async () => {
+    try {
+      const res = await api.get('/users/addresses');
+      setAddresses(res.data || []);
+    } catch (err) {
+      console.error('Error fetching addresses:', err);
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -41,6 +62,20 @@ export default function Checkout() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleAddressSelect = (e) => {
+    const addrId = e.target.value;
+    if (!addrId) return;
+    const selected = addresses.find(a => a.id.toString() === addrId);
+    if (selected) {
+      setFormData(prev => ({
+        ...prev,
+        alamat: selected.alamat,
+        kota: '-', // dikosongkan/diabaikan karena alamat dari DB sudah lengkap
+        kodepos: '-'
+      }));
+    }
+  };
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     
@@ -56,7 +91,7 @@ export default function Checkout() {
       setIsSuccess(true);
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
+      toast.error('Gagal memproses pesanan. Silakan coba lagi.');
     }
   };
 
@@ -119,6 +154,19 @@ export default function Checkout() {
             animate={{ opacity: 1, x: 0 }}
           >
             <h3 className="text-lg font-bold tracking-widest uppercase mb-8 border-b border-gray-100 pb-4">Shipping Details</h3>
+            
+            {addresses.length > 0 && (
+              <div className="mb-8 p-6 border border-gray-200 bg-gray-50">
+                <label className="block text-xs font-bold tracking-widest uppercase mb-4 text-gray-500">Pilih Alamat Tersimpan</label>
+                <select onChange={handleAddressSelect} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors bg-white">
+                  <option value="">-- Ketik Manual atau Pilih Alamat --</option>
+                  {addresses.map(addr => (
+                    <option key={addr.id} value={addr.id}>{addr.label} - {addr.alamat.substring(0, 50)}...</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-6">
               <div>
                 <label className="block text-xs font-bold tracking-widest uppercase mb-2">Nama Lengkap</label>

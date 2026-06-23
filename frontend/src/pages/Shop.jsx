@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/ui/ProductCard';
 import api from '../api/axios';
@@ -7,15 +8,17 @@ export default function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('All');
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [searchQuery]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/products');
+      const res = await api.get('/products', { params: { search: searchQuery } });
       setProducts(res.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -37,7 +40,13 @@ export default function Shop() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-gray-200 pb-6">
           <div>
             <h1 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase mb-2">Shop Collection</h1>
-            <p className="text-sm text-gray-500 uppercase tracking-widest">{filteredProducts.length} Items</p>
+            {searchQuery ? (
+              <p className="text-sm text-gray-500 tracking-widest mt-2">
+                SEARCH RESULTS FOR: <span className="text-black font-bold uppercase">"{searchQuery}"</span> ({filteredProducts.length})
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 uppercase tracking-widest">{filteredProducts.length} Items</p>
+            )}
           </div>
 
           <div className="flex space-x-6 mt-6 md:mt-0 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">

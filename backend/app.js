@@ -8,6 +8,8 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const brandRoutes = require('./routes/brandRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +26,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Toko Sepatu API berjalan dengan baik' });

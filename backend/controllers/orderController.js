@@ -82,7 +82,8 @@ const orderController = {
             res.json({ message: 'Status order berhasil diupdate' });
         } catch (err) {
             console.error(err);
-            res.status(500).json({ message: 'Terjadi kesalahan server' });
+            require('fs').writeFileSync('error.log', err.toString() + '\\n' + err.stack);
+            res.status(500).json({ message: 'Terjadi kesalahan server: ' + err.message });
         }
     }
 };

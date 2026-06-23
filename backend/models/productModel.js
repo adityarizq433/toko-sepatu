@@ -8,7 +8,7 @@ const ProductModel = {
         const binds = {};
 
         if (search) {
-            query += ' AND nama LIKE :search';
+            query += ' AND LOWER(nama) LIKE LOWER(:search)';
             binds.search = `%${search}%`;
         }
         if (brand) {
@@ -91,6 +91,7 @@ const ProductModel = {
     },
 
     async delete(id) {
+        await db.query('DELETE FROM order_items WHERE product_id = :id', { id });
         await db.query('DELETE FROM products WHERE id = :id', { id });
     },
 

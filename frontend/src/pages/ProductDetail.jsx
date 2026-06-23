@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../api/axios';
 
 export default function ProductDetail() {
@@ -43,7 +44,7 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
-      alert('Pilih ukuran terlebih dahulu!');
+      toast.error('Pilih ukuran terlebih dahulu!');
       return;
     }
     
@@ -54,10 +55,10 @@ export default function ProductDetail() {
         qty: 1
       });
       window.dispatchEvent(new Event('cartUpdated'));
-      alert(`Berhasil menambahkan ${product.nama} (Ukuran: ${selectedSize}) ke Keranjang!`);
+      toast.success(`Berhasil menambahkan ${product.nama} (Ukuran: ${selectedSize}) ke Keranjang!`);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Gagal menambahkan ke keranjang');
+      toast.error('Gagal menambahkan ke keranjang');
     }
   };
 
@@ -138,11 +139,35 @@ export default function ProductDetail() {
             {/* Actions */}
             <button 
               onClick={handleAddToCart}
-              className="w-full bg-black text-white px-8 py-5 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors flex justify-center items-center space-x-3 group"
+              className="w-full bg-black text-white px-8 py-5 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors flex justify-center items-center space-x-3 group mb-12"
             >
               <ShoppingBag size={18} className="transform group-hover:scale-110 transition-transform" />
               <span>Add to Cart</span>
             </button>
+
+            {/* Reviews Section */}
+            <div className="border-t border-gray-200 pt-8 mt-12">
+              <h2 className="text-xl font-black uppercase tracking-widest mb-6">Customer Reviews</h2>
+              {product.reviews && product.reviews.length > 0 ? (
+                <div className="space-y-6 max-h-96 overflow-y-auto pr-4">
+                  {product.reviews.map(review => (
+                    <div key={review.id} className="border-b border-gray-100 pb-6">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-sm font-bold uppercase">{review.nama_user || 'Anonymous'}</span>
+                        <span className="text-gray-300">|</span>
+                        <span className="text-yellow-400 text-sm">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                      </div>
+                      <p className="text-sm text-gray-600">{review.komentar}</p>
+                      <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest">
+                        {new Date(review.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Belum ada ulasan untuk produk ini.</p>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>

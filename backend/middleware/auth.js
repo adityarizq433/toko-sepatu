@@ -3,11 +3,6 @@ require('dotenv').config();
 
 // Middleware untuk verifikasi token JWT
 function verifyToken(req, res, next) {
-    // SEMENTARA: Bypass login agar bisa test Cart sebagai Guest (id: 1)
-    req.user = { id: 1, role: 'admin' };
-    next();
-    
-    /* 
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Format: "Bearer <token>"
 
@@ -22,7 +17,6 @@ function verifyToken(req, res, next) {
         req.user = decoded; // { id, email, role }
         next();
     });
-    */
 }
 
 // Middleware untuk cek role admin

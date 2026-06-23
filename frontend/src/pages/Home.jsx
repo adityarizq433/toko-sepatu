@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ProductCard from '../components/ui/ProductCard';
+import HeroSlider from '../components/ui/HeroSlider';
 import api from '../api/axios';
 
 export default function Home() {
@@ -23,66 +24,7 @@ export default function Home() {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative h-[85vh] w-full bg-[#f4f4f4] overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.h1 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
-            className="text-[12vw] font-black uppercase tracking-tighter text-black/5 z-0 select-none whitespace-nowrap"
-          >
-            Langkah Kita
-          </motion.h1>
-        </div>
-        
-        <div className="container mx-auto px-6 lg:px-12 h-full flex flex-col justify-center relative z-10">
-          <div className="max-w-2xl">
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-xs font-bold tracking-[0.3em] uppercase mb-6 text-gray-600"
-            >
-              The New Standard
-            </motion.p>
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-5xl lg:text-7xl font-black tracking-tighter uppercase leading-[0.9] mb-8"
-            >
-              Elevate <br/> Your Stride.
-            </motion.h2>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <Link 
-                to="/shop" 
-                className="inline-flex items-center space-x-4 bg-black text-white px-8 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors group"
-              >
-                <span>Shop Collection</span>
-                <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Floating Shoe Image (Decorative) */}
-        <motion.div 
-          initial={{ opacity: 0, x: 100, rotate: -10 }}
-          animate={{ opacity: 1, x: 0, rotate: -15 }}
-          transition={{ duration: 1, delay: 0.6, ease: [0.25, 1, 0.5, 1] }}
-          className="absolute right-[-10%] top-[20%] w-[60vw] max-w-[800px] pointer-events-none drop-shadow-2xl mix-blend-multiply"
-        >
-          <img 
-            src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80" 
-            alt="Hero Sneaker" 
-            className="w-full h-auto object-contain"
-          />
-        </motion.div>
-      </section>
+      <HeroSlider />
 
       {/* Featured Products */}
       <section className="py-24 bg-white">
@@ -112,8 +54,8 @@ export default function Home() {
         <div className="container mx-auto px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-16">
           <div className="w-full lg:w-1/2 aspect-[3/4] lg:aspect-[4/5] relative overflow-hidden bg-gray-900">
             <img 
-              src="https://images.unsplash.com/photo-1552346154-21d32810baa3?auto=format&fit=crop&q=80" 
-              alt="Editorial" 
+              src="/editorial.png" 
+              alt="Editorial Streetwear" 
               className="object-cover w-full h-full opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-700 cursor-pointer hover:scale-105"
             />
           </div>

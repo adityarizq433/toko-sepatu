@@ -1,0 +1,13 @@
+Error: ORA-02290: check constraint (SYSTEM.SYS_C008261) violated
+Help: https://docs.oracle.com/error-help/db/ora-02290/\nError: ORA-02290: check constraint (SYSTEM.SYS_C008261) violated
+Help: https://docs.oracle.com/error-help/db/ora-02290/
+    at Protocol._raiseException (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\thin\protocol\protocol.js:140:15)
+    at Protocol._processMessage (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\thin\protocol\protocol.js:296:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ThinConnectionImpl._execute (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\thin\connection.js:257:7)
+    at async ThinConnectionImpl.execute (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\thin\connection.js:1428:14)
+    at async Connection._execute (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\connection.js:1042:16)
+    at async Connection.execute (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\connection.js:1059:12)
+    at async Connection.execute (C:\kuliah\toko-sepatu\backend\node_modules\oracledb\lib\util.js:298:16)
+    at async Object.query (C:\kuliah\toko-sepatu\backend\config\db.js:35:28)
+    at async Object.updateStatus (C:\kuliah\toko-sepatu\backend\models\orderModel.js:59:9)

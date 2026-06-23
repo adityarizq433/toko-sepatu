@@ -69,7 +69,16 @@ const productController = {
 
     async update(req, res) {
         try {
-            const { nama, brand, kategori, harga, deskripsi, gambar } = req.body;
+            const { nama, brand, kategori, harga, deskripsi } = req.body;
+            let gambar = req.body.gambar || '';
+            
+            if (req.file) {
+                gambar = 'http://localhost:3000/' + req.file.path.replace(/\\/g, '/');
+            } else if (!gambar) {
+                const oldProduct = await ProductModel.findById(req.params.id);
+                if (oldProduct) gambar = oldProduct.gambar;
+            }
+
             await ProductModel.update(req.params.id, { nama, brand, kategori, harga, deskripsi, gambar });
             res.json({ message: 'Produk berhasil diupdate' });
         } catch (err) {
