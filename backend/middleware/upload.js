@@ -14,6 +14,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'toko_sepatu',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'svg'],
+    resource_type: 'auto',
   },
 });
 
