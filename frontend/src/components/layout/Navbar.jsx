@@ -156,7 +156,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Links (Right) & Icons */}
-          <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-4 lg:space-x-8">
             <nav className="hidden lg:flex space-x-8 items-center mr-4">
               {user?.role === 'admin' && (
                 <Link
@@ -171,7 +171,7 @@ export default function Navbar() {
             <button onClick={() => setIsSearchOpen(true)} className="text-foreground/80 hover:text-foreground transition-colors">
               <Search size={20} strokeWidth={1.5} />
             </button>
-            <Link to={user ? "/profile" : "/login"} className="hidden lg:block text-foreground/80 hover:text-foreground transition-colors">
+            <Link to={user ? "/profile" : "/login"} className="text-foreground/80 hover:text-foreground transition-colors">
               <User size={20} strokeWidth={1.5} />
             </Link>
             <Link to="/cart" className="relative text-foreground/80 hover:text-foreground transition-colors">

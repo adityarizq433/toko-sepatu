@@ -114,7 +114,7 @@ export default function HeroSlider() {
       <div className="container mx-auto px-6 lg:px-12 h-full flex flex-col lg:flex-row items-center justify-between relative z-10">
 
         {/* Left Content (Slogan & Details) */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center mt-8 lg:mt-0 order-2 lg:order-1 relative z-20">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center mt-4 mb-24 lg:mt-0 lg:mb-0 order-2 lg:order-1 relative z-20">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide.id}
