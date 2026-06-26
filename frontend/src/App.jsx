@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
@@ -16,30 +17,32 @@ import ScrollToTop from './components/utils/ScrollToTop';
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Toaster position="top-center" />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="admin" element={<Admin />} />
-          <Route path="shop" element={<Shop />} />
-          <Route path="brand/:brandName" element={<BrandPage />} />
-          <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="contact" element={<ContactUs />} />
-          <Route path="track-order" element={<TrackOrder />} />
-          <Route path="faq" element={<FAQ />} />
-          <Route path="shipping-returns" element={<ShippingReturns />} />
-          <Route path="privacy" element={<Policy title="Privacy Policy" />} />
-          <Route path="terms" element={<Policy title="Terms of Service" />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-        <Route path="/login" element={<Login />} />
-        <Route path="/editorial" element={<Editorial />} />
-      </Routes>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Toaster position="top-center" />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="admin" element={<Admin />} />
+            <Route path="shop" element={<Shop />} />
+            <Route path="brand/:brandName" element={<BrandPage />} />
+            <Route path="product/:id" element={<ProductDetail />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="contact" element={<ContactUs />} />
+            <Route path="track-order" element={<TrackOrder />} />
+            <Route path="faq" element={<FAQ />} />
+            <Route path="shipping-returns" element={<ShippingReturns />} />
+            <Route path="privacy" element={<Policy title="Privacy Policy" />} />
+            <Route path="terms" element={<Policy title="Terms of Service" />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
+          <Route path="/login" element={<Login />} />
+          <Route path="/editorial" element={<Editorial />} />
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 

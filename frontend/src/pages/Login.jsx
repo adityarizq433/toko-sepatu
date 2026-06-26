@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { GoogleLogin } from '@react-oauth/google';
 import api from '../api/axios';
 
 export default function Login() {
@@ -11,6 +12,8 @@ export default function Login() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,26 +25,54 @@ export default function Login() {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         toast.success(res.data.message || 'Welcome back!');
+        window.dispatchEvent(new Event('authStateChanged'));
+        navigate('/');
       } else {
-        await api.post('/auth/register', { nama: name, email, password });
-        const loginRes = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', loginRes.data.token);
-        localStorage.setItem('user', JSON.stringify(loginRes.data.user));
-        toast.success('Account created and logged in!');
+        const res = await api.post('/auth/register', { nama: name, email, password });
+        toast.success(res.data.message);
+        setShowOTP(true);
       }
-      
-      window.dispatchEvent(new Event('authStateChanged'));
-      navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.message || (error.response?.data?.errors?.[0]?.msg) || 'Authentication failed');
+      // If login fails because of unverified email, show OTP modal
+      if (isLogin && error.response?.status === 401 && error.response?.data?.message.includes('belum terverifikasi')) {
+         setShowOTP(true);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await api.post('/auth/verify-otp', { email, otp });
+      toast.success(res.data.message);
+      setShowOTP(false);
+      setIsLogin(true); // switch to login mode after verify
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Verifikasi gagal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const res = await api.post('/auth/google', { credential: credentialResponse.credential });
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      toast.success(res.data.message || 'Welcome!');
+      window.dispatchEvent(new Event('authStateChanged'));
+      navigate('/');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Google Login failed');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F9F9F9] flex flex-col relative">
-      {/* Minimal Header */}
       <header className="absolute top-0 w-full p-6 lg:px-12 flex justify-between items-center z-10">
         <Link to="/" className="text-2xl font-black tracking-tighter uppercase">
           Langkah<span className="text-gray-400 font-light">Kita</span>
@@ -52,7 +83,6 @@ export default function Login() {
         </Link>
       </header>
 
-      {/* Main Content */}
       <div className="flex-1 flex items-center justify-center pt-24 pb-12 px-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -93,11 +123,24 @@ export default function Login() {
           </button>
         </form>
 
+        <div className="mt-8 flex items-center">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <span className="px-4 text-xs text-gray-400 font-bold uppercase tracking-widest">Or</span>
+            <div className="flex-1 border-t border-gray-200"></div>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error('Google Login failed')}
+            />
+        </div>
+
         <div className="mt-10 text-center">
           <p className="text-sm text-gray-500">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button 
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {setIsLogin(!isLogin); setShowOTP(false);}}
               className="text-black font-bold uppercase tracking-wider ml-1 hover:underline"
             >
               {isLogin ? 'Register' : 'Login'}
@@ -106,6 +149,34 @@ export default function Login() {
         </div>
         </motion.div>
       </div>
+
+      {/* OTP Modal */}
+      <AnimatePresence>
+        {showOTP && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white p-8 max-w-sm w-full relative text-center">
+              <button onClick={() => setShowOTP(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black font-bold">X</button>
+              <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Verifikasi OTP</h2>
+              <p className="text-gray-500 text-sm mb-6">Kami telah mengirimkan 6 digit kode OTP ke email <strong>{email}</strong></p>
+              <form onSubmit={handleVerifyOTP}>
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  value={otp} 
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="------"
+                  required 
+                  className="w-full text-center tracking-[1em] font-black text-2xl border-b-2 border-gray-200 py-3 outline-none focus:border-black transition-colors mb-6" 
+                />
+                <button type="submit" disabled={loading || otp.length < 6} className="w-full bg-black text-white py-4 text-xs font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors disabled:bg-gray-400">
+                  {loading ? 'Verifying...' : 'Verify Email'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
