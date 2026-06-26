@@ -14,12 +14,10 @@ import Profile from './pages/Profile';
 import { ContactUs, TrackOrder, FAQ, ShippingReturns, Policy } from './pages/SupportPages';
 import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/utils/ScrollToTop';
-import SocketProvider from './components/utils/SocketProvider';
 
 function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <SocketProvider>
         <BrowserRouter>
         <ScrollToTop />
         <Toaster position="top-center" />
@@ -44,7 +42,6 @@ function App() {
           <Route path="/editorial" element={<Editorial />} />
         </Routes>
       </BrowserRouter>
-      </SocketProvider>
     </GoogleOAuthProvider>
   );
 }

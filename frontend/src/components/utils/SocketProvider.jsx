@@ -18,8 +18,9 @@ export default function SocketProvider({ children }) {
         try {
           const parsedUser = JSON.parse(storedUser);
           
+          const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/api$/, '');
           if (!newSocket) {
-            newSocket = io('http://localhost:3000');
+            newSocket = io(socketUrl);
             setSocket(newSocket);
 
             newSocket.on('connect', () => {

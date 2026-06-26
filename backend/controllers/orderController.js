@@ -81,22 +81,6 @@ const orderController = {
             const { status } = req.body;
             await OrderModel.updateStatus(req.params.id, status);
 
-            // Fetch order to get user_id
-            const order = await OrderModel.getById(req.params.id);
-            if (order) {
-                const socketUtil = require('../utils/socket');
-                const io = socketUtil.getIO();
-                const userSocketId = socketUtil.getUserSocket(order.user_id);
-                
-                if (userSocketId) {
-                    io.to(userSocketId).emit('order_updated', {
-                        orderId: order.id,
-                        status: status,
-                        message: `Pesanan LK-${order.id} Anda sekarang berstatus: ${status}`
-                    });
-                }
-            }
-
             res.json({ message: 'Status order berhasil diupdate' });
         } catch (err) {
             console.error(err);

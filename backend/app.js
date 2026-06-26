@@ -1,6 +1,4 @@
 const express = require('express');
-const http = require('http');
-const socketUtil = require('./utils/socket');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -42,11 +40,8 @@ app.use((req, res) => {
     res.status(404).json({ message: 'Endpoint tidak ditemukan' });
 });
 
-const server = http.createServer(app);
-socketUtil.init(server);
-
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
 });
 
-module.exports = server;
+module.exports = app;
