@@ -106,7 +106,7 @@ export default function HeroSlider() {
   };
 
   return (
-    <section className="relative h-[85vh] w-full bg-white overflow-hidden flex items-center">
+    <section className="relative min-h-[85vh] h-auto lg:h-[85vh] py-12 lg:py-0 w-full bg-white overflow-hidden flex items-center">
 
 
       {/* No Gradient Overlay Needed for Reference Design */}
@@ -114,7 +114,7 @@ export default function HeroSlider() {
       <div className="container mx-auto px-6 lg:px-12 h-full flex flex-col lg:flex-row items-center justify-between relative z-10">
 
         {/* Left Content (Slogan & Details) */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center mt-20 lg:mt-0 order-2 lg:order-1 relative z-20">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center mt-8 lg:mt-0 order-2 lg:order-1 relative z-20">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide.id}
@@ -124,7 +124,7 @@ export default function HeroSlider() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="bg-white py-6 pr-8 inline-block shadow-[20px_0_20px_white]"
             >
-              <h2 className="text-5xl lg:text-[5.5rem] font-black tracking-tighter uppercase leading-[0.9] text-black mb-6">
+              <h2 className="text-4xl md:text-5xl lg:text-[5.5rem] font-black tracking-tighter uppercase leading-[0.9] text-black mb-6">
                 {currentSlide.slogan.split(',').map((part, i) => (
                   <span key={i}>
                     {part.trim()}
@@ -155,7 +155,7 @@ export default function HeroSlider() {
 
         {/* Right Content (Floating 3D Shoe) */}
         <motion.div
-          className="w-full lg:w-[55%] h-[50vh] lg:h-full flex items-center justify-center relative order-1 lg:order-2 z-10 pointer-events-none"
+          className="w-full lg:w-[55%] h-[40vh] lg:h-full flex items-center justify-center relative order-1 lg:order-2 z-10 pointer-events-none"
           animate={{
             y: [-10, 10, -10],
           }}

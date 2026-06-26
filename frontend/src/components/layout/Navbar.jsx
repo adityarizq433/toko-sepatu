@@ -121,7 +121,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 w-[600px] lg:w-[700px] bg-white/95 backdrop-blur-md shadow-2xl border border-gray-100 rounded-2xl overflow-hidden z-50 mt-4"
+                    className="absolute top-full left-0 w-[90vw] md:w-[600px] lg:w-[700px] bg-white/95 backdrop-blur-md shadow-2xl border border-gray-100 rounded-2xl overflow-hidden z-50 mt-4"
                   >
                     <div className="p-8 grid grid-cols-2 md:grid-cols-3 gap-6">
                       {shoeBrands.map((brand) => (
@@ -275,7 +275,7 @@ export default function Navbar() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="SEARCH FOR SNEAKERS..."
-                className="w-full bg-transparent border-b-4 border-black text-4xl lg:text-7xl font-black tracking-tighter uppercase pb-4 outline-none placeholder-gray-300 text-black"
+                className="w-full bg-transparent border-b-4 border-black text-2xl md:text-4xl lg:text-7xl font-black tracking-tighter uppercase pb-4 outline-none placeholder-gray-300 text-black"
               />
               <button type="submit" className="absolute right-0 bottom-6 text-black hover:text-gray-500">
                 <ArrowRight size={40} strokeWidth={2} />
