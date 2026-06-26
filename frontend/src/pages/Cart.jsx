@@ -127,12 +127,12 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Pengiriman</span>
-                    <span className="font-medium">Gratis</span>
+                    <span className="font-medium italic text-xs">Dihitung saat checkout</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center border-t border-gray-100 pt-6 mb-8">
-                  <span className="font-bold uppercase tracking-widest">Total</span>
+                  <span className="font-bold uppercase tracking-widest text-xs">Total<br/><span className="text-[10px] text-gray-400 font-normal">*Belum termasuk ongkir</span></span>
                   <span className="text-xl font-black">Rp {subtotal.toLocaleString('id-ID')}</span>
                 </div>
 

@@ -1,10 +1,10 @@
 const db = require('../config/db');
 
 const OrderModel = {
-    async create(userId, totalHarga, alamatPengiriman) {
-        const sql = `INSERT INTO orders (user_id, total_harga, alamat_pengiriman) 
-                     VALUES (?, ?, ?)`;
-        const [result] = await db.query(sql, [userId, totalHarga, alamatPengiriman]);
+    async create(userId, totalHarga, alamatPengiriman, ongkir, kurir) {
+        const sql = `INSERT INTO orders (user_id, total_harga, alamat_pengiriman, ongkir, kurir) 
+                     VALUES (?, ?, ?, ?, ?)`;
+        const [result] = await db.query(sql, [userId, totalHarga, alamatPengiriman, ongkir, kurir]);
         return result.insertId;
     },
 

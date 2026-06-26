@@ -29,22 +29,26 @@ export default function Profile() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
+    let fetchOrdersFn = null;
+
     if (storedUser && storedUser !== 'undefined') {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setProfileData({ nama: parsedUser.nama || parsedUser.name || '', email: parsedUser.email || '', no_hp: parsedUser.no_hp || '', password: '' });
         
-        // Fetch Orders
-        api.get('/orders/my-orders').then(res => {
-          setOrders(res.data || []);
-          setLoading(false);
-        }).catch(err => {
-          console.error(err);
-          setLoading(false);
-        });
-
-        // Fetch Addresses
+        fetchOrdersFn = () => {
+          api.get('/orders/my-orders').then(res => {
+            setOrders(res.data || []);
+            setLoading(false);
+          }).catch(err => {
+            console.error(err);
+            setLoading(false);
+          });
+        };
+        fetchOrdersFn();
+        
+        window.addEventListener('orderUpdated', fetchOrdersFn);
         fetchAddresses();
       } catch (e) {
         console.error('Failed to parse user', e);
@@ -53,6 +57,12 @@ export default function Profile() {
     } else {
       navigate('/login');
     }
+
+    return () => {
+      if (fetchOrdersFn) {
+        window.removeEventListener('orderUpdated', fetchOrdersFn);
+      }
+    };
   }, [navigate]);
 
   const handleLogout = () => {

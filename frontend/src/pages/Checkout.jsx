@@ -11,19 +11,27 @@ export default function Checkout() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [addresses, setAddresses] = useState([]);
   const [user, setUser] = useState(null);
+  
+  // Shipping states
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [costs, setCosts] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedCourier, setSelectedCourier] = useState('');
+  const [selectedService, setSelectedService] = useState(null); // { service, cost }
+
   const [formData, setFormData] = useState({
     nama: '',
     alamat: '',
-    kota: '',
-    kodepos: '',
-    phone: ''
+    phone: '',
+    kodepos: ''
   });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCart();
-    
-    // Ambil data user dari local storage
+    fetchProvinces();
     const storedUser = localStorage.getItem('user');
     if (storedUser && storedUser !== 'undefined') {
       const parsedUser = JSON.parse(storedUser);
@@ -57,6 +65,42 @@ export default function Checkout() {
     }
   };
 
+  const fetchProvinces = async () => {
+    try {
+      const res = await api.get('/shipping/provinces');
+      setProvinces(res.data);
+    } catch (error) {
+      console.error('Error fetching provinces:', error);
+    }
+  };
+
+  const fetchCities = async (provinceId) => {
+    try {
+      const res = await api.get(`/shipping/cities/${provinceId}`);
+      setCities(res.data);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+    }
+  };
+
+  const fetchCosts = async (cityId, courier) => {
+    const totalQty = cartItems.reduce((acc, item) => acc + item.qty, 0);
+    const weight = totalQty * 1000; // 1kg per item
+    
+    try {
+      const res = await api.post('/shipping/cost', {
+        origin: '444', // Surabaya
+        destination: cityId,
+        weight: weight,
+        courier: courier
+      });
+      setCosts(res.data.costs || []);
+    } catch (error) {
+      console.error('Error fetching costs:', error);
+      toast.error('Gagal mengambil data ongkos kirim');
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -67,26 +111,67 @@ export default function Checkout() {
     if (!addrId) return;
     const selected = addresses.find(a => a.id.toString() === addrId);
     if (selected) {
+      const match = selected.alamat.match(/\b\d{5}\b/g);
+      const extractedKodePos = match ? match[match.length - 1] : '';
       setFormData(prev => ({
         ...prev,
         alamat: selected.alamat,
-        kota: '-', // dikosongkan/diabaikan karena alamat dari DB sudah lengkap
-        kodepos: '-'
+        kodepos: extractedKodePos
       }));
+    }
+  };
+
+  const handleProvinceChange = (e) => {
+    const val = e.target.value;
+    setSelectedProvince(val);
+    setSelectedCity('');
+    setCosts([]);
+    setSelectedService(null);
+    if (val) {
+      fetchCities(val);
+    } else {
+      setCities([]);
+    }
+  };
+
+  const handleCityChange = (e) => {
+    const val = e.target.value;
+    setSelectedCity(val);
+    setCosts([]);
+    setSelectedService(null);
+    if (val && selectedCourier) {
+      fetchCosts(val, selectedCourier);
+    }
+  };
+
+  const handleCourierChange = (e) => {
+    const val = e.target.value;
+    setSelectedCourier(val);
+    setCosts([]);
+    setSelectedService(null);
+    if (selectedCity && val) {
+      fetchCosts(selectedCity, val);
     }
   };
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+    if (!selectedService) {
+      return toast.error('Silakan pilih layanan ongkos kirim terlebih dahulu');
+    }
+
+    const provinceName = provinces.find(p => p.province_id === selectedProvince)?.province;
+    const cityName = cities.find(c => c.city_id === selectedCity)?.city_name;
     
-    // Gabungkan alamat
-    const alamatLengkap = `${formData.nama} | ${formData.phone} | ${formData.alamat}, ${formData.kota}, ${formData.kodepos}`;
+    const alamatLengkap = `${formData.nama} | ${formData.phone} | ${formData.alamat}, ${cityName}, ${provinceName}, ${formData.kodepos}`;
+    const kurirLengkap = `${selectedCourier.toUpperCase()} - ${selectedService.service}`;
     
     try {
       await api.post('/orders/checkout', {
-        alamatPengiriman: alamatLengkap
+        alamatPengiriman: alamatLengkap,
+        ongkir: selectedService.cost,
+        kurir: kurirLengkap
       });
-      // Panggil event agar icon keranjang di navbar berubah jadi 0
       window.dispatchEvent(new Event('cartUpdated'));
       setIsSuccess(true);
     } catch (error) {
@@ -96,6 +181,8 @@ export default function Checkout() {
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.harga * item.qty), 0);
+  const ongkirCost = selectedService ? selectedService.cost : 0;
+  const grandTotal = subtotal + ongkirCost;
 
   if (isSuccess) {
     return (
@@ -117,10 +204,10 @@ export default function Checkout() {
             Terima kasih telah berbelanja di Langkah Kita. Pesanan Anda sedang diproses dan akan segera dikirim.
           </p>
           <Link 
-            to="/shop" 
+            to="/profile" 
             className="inline-block bg-black text-white px-8 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors w-full"
           >
-            Lanjutkan Belanja
+            Lihat Pesanan Saya
           </Link>
         </motion.div>
       </div>
@@ -148,11 +235,7 @@ export default function Checkout() {
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
-          {/* Form Pengiriman */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <h3 className="text-lg font-bold tracking-widest uppercase mb-8 border-b border-gray-100 pb-4">Shipping Details</h3>
             
             {addresses.length > 0 && (
@@ -164,80 +247,88 @@ export default function Checkout() {
                     <option key={addr.id} value={addr.id}>{addr.label} - {addr.alamat.substring(0, 50)}...</option>
                   ))}
                 </select>
+                <p className="mt-3 text-xs text-gray-400 italic">* Pilih Provinsi dan Kota secara manual di bawah untuk menghitung ongkos kirim.</p>
               </div>
             )}
 
             <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-6">
               <div>
                 <label className="block text-xs font-bold tracking-widest uppercase mb-2">Nama Lengkap</label>
-                <input 
-                  type="text" 
-                  name="nama"
-                  required
-                  value={formData.nama}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors"
-                  placeholder="John Doe"
-                />
+                <input type="text" name="nama" required value={formData.nama} onChange={handleInputChange} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors" placeholder="John Doe" />
               </div>
               <div>
                 <label className="block text-xs font-bold tracking-widest uppercase mb-2">Nomor HP</label>
-                <input 
-                  type="tel" 
-                  name="phone"
-                  required
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors"
-                  placeholder="081234567890"
-                />
+                <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors" placeholder="081234567890" />
               </div>
               <div>
-                <label className="block text-xs font-bold tracking-widest uppercase mb-2">Alamat Lengkap</label>
-                <textarea 
-                  name="alamat"
-                  required
-                  value={formData.alamat}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors resize-none"
-                  placeholder="Jl. Sudirman No. 123"
-                ></textarea>
+                <label className="block text-xs font-bold tracking-widest uppercase mb-2">Alamat Jalan</label>
+                <textarea name="alamat" required value={formData.alamat} onChange={handleInputChange} rows="3" className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors resize-none" placeholder="Jl. Sudirman No. 123"></textarea>
               </div>
+              
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold tracking-widest uppercase mb-2">Kota</label>
-                  <input 
-                    type="text" 
-                    name="kota"
-                    required
-                    value={formData.kota}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors"
-                    placeholder="Jakarta"
-                  />
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-2">Provinsi</label>
+                  <select required value={selectedProvince} onChange={handleProvinceChange} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black bg-white">
+                    <option value="">Pilih Provinsi</option>
+                    {provinces.map(p => (
+                      <option key={p.province_id} value={p.province_id}>{p.province}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold tracking-widest uppercase mb-2">Kode Pos</label>
-                  <input 
-                    type="text" 
-                    name="kodepos"
-                    required
-                    value={formData.kodepos}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors"
-                    placeholder="10000"
-                  />
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-2">Kota/Kabupaten</label>
+                  <select required value={selectedCity} onChange={handleCityChange} disabled={!selectedProvince} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black bg-white disabled:bg-gray-100">
+                    <option value="">Pilih Kota</option>
+                    {cities.map(c => (
+                      <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-2">Kode Pos</label>
+                  <input type="text" name="kodepos" required value={formData.kodepos} onChange={handleInputChange} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black transition-colors" placeholder="10000" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-2">Kurir Pengiriman</label>
+                  <select required value={selectedCourier} onChange={handleCourierChange} className="w-full border border-gray-200 p-4 focus:outline-none focus:border-black bg-white">
+                    <option value="">Pilih Kurir</option>
+                    <option value="jne">JNE</option>
+                    <option value="pos">POS Indonesia</option>
+                    <option value="tiki">TIKI</option>
+                  </select>
+                </div>
+              </div>
+
+              {costs.length > 0 && (
+                <div className="mt-8">
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-4">Layanan Pengiriman</label>
+                  <div className="space-y-3">
+                    {costs.map((c, i) => (
+                      <label key={i} className={`flex items-center p-4 border cursor-pointer transition-colors ${selectedService?.service === c.service ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <input 
+                          type="radio" 
+                          name="shipping_service" 
+                          className="mr-4 accent-black w-4 h-4"
+                          onChange={() => setSelectedService({ service: c.service, cost: c.cost[0].value })}
+                          checked={selectedService?.service === c.service}
+                        />
+                        <div className="flex-1">
+                          <p className="font-bold uppercase text-sm">{c.service}</p>
+                          <p className="text-xs text-gray-500">{c.description} ({c.cost[0].etd} Hari)</p>
+                        </div>
+                        <p className="font-medium text-sm">Rp {c.cost[0].value.toLocaleString('id-ID')}</p>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </form>
           </motion.div>
 
-          {/* Ringkasan Belanja */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <div className="bg-white p-8 shadow-sm sticky top-24">
               <h3 className="text-lg font-bold tracking-widest uppercase mb-8 border-b border-gray-100 pb-4">Order Summary</h3>
               
@@ -249,7 +340,7 @@ export default function Checkout() {
                     </div>
                     <div className="flex-grow">
                       <p className="text-sm font-bold uppercase line-clamp-1">{item.nama}</p>
-                      <p className="text-xs text-gray-500 mt-1">Size: {item.ukuran} | Qty: {item.qty}</p>
+                      <p className="text-xs text-gray-500 mt-1">Size: {item.ukuran} | Qty: {item.qty} | Wgt: 1kg</p>
                     </div>
                     <p className="text-sm font-medium whitespace-nowrap">Rp {(item.harga * item.qty).toLocaleString('id-ID')}</p>
                   </div>
@@ -262,20 +353,21 @@ export default function Checkout() {
                   <span className="font-medium">Rp {subtotal.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Pengiriman</span>
-                  <span className="font-medium">Gratis</span>
+                  <span className="text-gray-500">Ongkos Kirim ({cartItems.reduce((a,c)=>a+c.qty,0)} kg)</span>
+                  <span className="font-medium">{ongkirCost > 0 ? `Rp ${ongkirCost.toLocaleString('id-ID')}` : '-'}</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center border-t border-gray-100 pt-6 mb-8">
-                <span className="font-bold uppercase tracking-widest">Total</span>
-                <span className="text-xl font-black">Rp {subtotal.toLocaleString('id-ID')}</span>
+                <span className="font-bold uppercase tracking-widest">Grand Total</span>
+                <span className="text-xl font-black">Rp {grandTotal.toLocaleString('id-ID')}</span>
               </div>
 
               <button 
                 type="submit"
                 form="checkout-form"
-                className="w-full bg-black text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors flex justify-center items-center"
+                disabled={!selectedService}
+                className="w-full bg-black text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors flex justify-center items-center disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Place Order
               </button>

@@ -10,6 +10,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -107,7 +108,7 @@ export default function ProductDetail() {
             <div className="mb-12">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs font-bold tracking-widest uppercase">Select Size (EU)</span>
-                <span className="text-xs text-gray-400 underline cursor-pointer">Size Guide</span>
+                <span onClick={() => setShowSizeGuide(true)} className="text-xs text-gray-400 underline cursor-pointer hover:text-black transition-colors">Size Guide</span>
               </div>
               
               {product.sizes && product.sizes.length > 0 ? (
@@ -173,7 +174,43 @@ export default function ProductDetail() {
             </div>
           </motion.div>
         </div>
-      </div>
+    </div>
+      
+      {/* Size Guide Modal */}
+      {showSizeGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-8 max-w-lg w-full relative"
+          >
+            <button onClick={() => setShowSizeGuide(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black text-xl font-bold">
+              ✕
+            </button>
+            <h2 className="text-2xl font-black uppercase tracking-widest mb-6">Size Guide</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="py-3 px-4 font-bold uppercase tracking-widest">EU</th>
+                    <th className="py-3 px-4 font-bold uppercase tracking-widest">US (Men)</th>
+                    <th className="py-3 px-4 font-bold uppercase tracking-widest">Panjang (cm)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100"><td className="py-3 px-4">39</td><td className="py-3 px-4">6.5</td><td className="py-3 px-4">24.5</td></tr>
+                  <tr className="border-b border-gray-100"><td className="py-3 px-4">40</td><td className="py-3 px-4">7</td><td className="py-3 px-4">25.0</td></tr>
+                  <tr className="border-b border-gray-100"><td className="py-3 px-4">41</td><td className="py-3 px-4">8</td><td className="py-3 px-4">26.0</td></tr>
+                  <tr className="border-b border-gray-100"><td className="py-3 px-4">42</td><td className="py-3 px-4">8.5</td><td className="py-3 px-4">26.5</td></tr>
+                  <tr className="border-b border-gray-100"><td className="py-3 px-4">43</td><td className="py-3 px-4">9.5</td><td className="py-3 px-4">27.5</td></tr>
+                  <tr className="border-b border-gray-100"><td className="py-3 px-4">44</td><td className="py-3 px-4">10</td><td className="py-3 px-4">28.0</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-xs text-gray-500 italic">* Ukuran panjang diukur dari tumit hingga ujung jari kaki.</p>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ const db = require('../config/db');
 
 const orderController = {
     async checkout(req, res) {
-        const { alamatPengiriman } = req.body;
+        const { alamatPengiriman, ongkir = 0, kurir = 'Tidak ada' } = req.body;
 
         if (!alamatPengiriman) {
             return res.status(400).json({ message: 'Alamat pengiriman wajib diisi' });
@@ -17,9 +17,10 @@ const orderController = {
                 return res.status(400).json({ message: 'Keranjang masih kosong' });
             }
 
-            const totalHarga = cartItems.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+            // Total harga include ongkir
+            const totalHarga = cartItems.reduce((sum, item) => sum + (item.harga * item.qty), 0) + Number(ongkir);
 
-            const orderId = await OrderModel.create(req.user.id, totalHarga, alamatPengiriman);
+            const orderId = await OrderModel.create(req.user.id, totalHarga, alamatPengiriman, ongkir, kurir);
 
             for (const item of cartItems) {
                 await OrderModel.addItem(orderId, item.product_id, item.ukuran, item.qty, item.harga);
@@ -79,6 +80,23 @@ const orderController = {
         try {
             const { status } = req.body;
             await OrderModel.updateStatus(req.params.id, status);
+
+            // Fetch order to get user_id
+            const order = await OrderModel.getById(req.params.id);
+            if (order) {
+                const socketUtil = require('../utils/socket');
+                const io = socketUtil.getIO();
+                const userSocketId = socketUtil.getUserSocket(order.user_id);
+                
+                if (userSocketId) {
+                    io.to(userSocketId).emit('order_updated', {
+                        orderId: order.id,
+                        status: status,
+                        message: `Pesanan LK-${order.id} Anda sekarang berstatus: ${status}`
+                    });
+                }
+            }
+
             res.json({ message: 'Status order berhasil diupdate' });
         } catch (err) {
             console.error(err);

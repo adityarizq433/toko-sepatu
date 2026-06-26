@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const socketUtil = require('./utils/socket');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -10,6 +12,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const brandRoutes = require('./routes/brandRoutes');
 const userRoutes = require('./routes/userRoutes');
+const shippingRoutes = require('./routes/shippingRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +31,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/shipping', shippingRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Toko Sepatu API berjalan dengan baik' });
@@ -38,8 +42,11 @@ app.use((req, res) => {
     res.status(404).json({ message: 'Endpoint tidak ditemukan' });
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+socketUtil.init(server);
+
+server.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
 });
 
-module.exports = app;
+module.exports = server;

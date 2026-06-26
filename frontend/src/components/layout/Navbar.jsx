@@ -171,9 +171,6 @@ export default function Navbar() {
             <button onClick={() => setIsSearchOpen(true)} className="text-foreground/80 hover:text-foreground transition-colors">
               <Search size={20} strokeWidth={1.5} />
             </button>
-            <Link to={user ? "/profile" : "/login"} className="text-foreground/80 hover:text-foreground transition-colors">
-              <User size={20} strokeWidth={1.5} />
-            </Link>
             <Link to="/cart" className="relative text-foreground/80 hover:text-foreground transition-colors">
               <ShoppingBag size={20} strokeWidth={1.5} />
               {cartCount > 0 && (
@@ -181,6 +178,9 @@ export default function Navbar() {
                   {cartCount}
                 </span>
               )}
+            </Link>
+            <Link to={user ? "/profile" : "/login"} className="text-foreground/80 hover:text-foreground transition-colors">
+              <User size={20} strokeWidth={1.5} />
             </Link>
           </div>
         </div>
