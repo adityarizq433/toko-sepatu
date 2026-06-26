@@ -1,36 +1,29 @@
 const db = require('../config/db');
-const oracledb = require('oracledb');
 
 const OrderModel = {
     async create(userId, totalHarga, alamatPengiriman) {
         const sql = `INSERT INTO orders (user_id, total_harga, alamat_pengiriman) 
-                     VALUES (:userId, :totalHarga, :alamatPengiriman)
-                     RETURNING id INTO :id`;
-        const binds = {
-            userId, totalHarga, alamatPengiriman,
-            id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT }
-        };
-        const [rows, result] = await db.query(sql, binds);
-        return result.outBinds.id[0];
+                     VALUES (?, ?, ?)`;
+        const [result] = await db.query(sql, [userId, totalHarga, alamatPengiriman]);
+        return result.insertId;
     },
 
     async addItem(orderId, productId, ukuran, qty, hargaSatuan) {
         const sql = `INSERT INTO order_items (order_id, product_id, ukuran, qty, harga_satuan) 
-                     VALUES (:orderId, :productId, :ukuran, :qty, :hargaSatuan)`;
-        const binds = { orderId, productId, ukuran, qty, hargaSatuan };
-        await db.query(sql, binds);
+                     VALUES (?, ?, ?, ?, ?)`;
+        await db.query(sql, [orderId, productId, ukuran, qty, hargaSatuan]);
     },
 
     async getByUser(userId) {
         const [rows] = await db.query(
-            'SELECT * FROM orders WHERE user_id = :userId ORDER BY created_at DESC',
-            { userId }
+            'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
+            [userId]
         );
         return rows;
     },
 
     async getById(orderId) {
-        const [rows] = await db.query('SELECT * FROM orders WHERE id = :orderId', { orderId });
+        const [rows] = await db.query('SELECT * FROM orders WHERE id = ?', [orderId]);
         return rows[0];
     },
 
@@ -39,8 +32,8 @@ const OrderModel = {
             `SELECT oi.*, p.nama, p.gambar
              FROM order_items oi
              JOIN products p ON oi.product_id = p.id
-             WHERE oi.order_id = :orderId`,
-            { orderId }
+             WHERE oi.order_id = ?`,
+            [orderId]
         );
         return rows;
     },
@@ -56,7 +49,7 @@ const OrderModel = {
     },
 
     async updateStatus(orderId, status) {
-        await db.query('UPDATE orders SET status = :status WHERE id = :orderId', { status, orderId });
+        await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, orderId]);
     }
 };
 
