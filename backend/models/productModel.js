@@ -72,6 +72,10 @@ const ProductModel = {
         return result.insertId;
     },
 
+    async deleteSizes(productId) {
+        await db.query('DELETE FROM product_sizes WHERE product_id = ?', [productId]);
+    },
+
     async update(id, { nama, brand, kategori, harga, deskripsi, gambar }) {
         await db.query(
             'UPDATE products SET nama = ?, brand = ?, kategori = ?, harga = ?, deskripsi = ?, gambar = ? WHERE id = ?',

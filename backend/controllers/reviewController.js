@@ -19,6 +19,29 @@ const reviewController = {
             console.error(err);
             res.status(500).json({ message: 'Terjadi kesalahan server' });
         }
+    },
+
+    async getAll(req, res) {
+        try {
+            const reviews = await ReviewModel.findAll();
+            res.json(reviews);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Terjadi kesalahan server' });
+        }
+    },
+
+    async delete(req, res) {
+        try {
+            const affectedRows = await ReviewModel.delete(req.params.id);
+            if (affectedRows === 0) {
+                return res.status(404).json({ message: 'Review tidak ditemukan' });
+            }
+            res.json({ message: 'Review berhasil dihapus' });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Terjadi kesalahan server' });
+        }
     }
 };
 

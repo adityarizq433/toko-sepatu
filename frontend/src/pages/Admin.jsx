@@ -3,6 +3,7 @@ import api from '../api/axios';
 import { Plus, Trash2, Edit2, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'products', 'brands', or 'orders'
@@ -37,6 +38,7 @@ export default function Admin() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({ id: null, nama: '', brand: '', kategori: 'Sneakers', harga: '', deskripsi: '', gambar: '' });
   const [editImageFile, setEditImageFile] = useState(null);
+  const [editSizes, setEditSizes] = useState([{ ukuran: 40, stok: 10 }]);
 
   // Brand state
   const [brands, setBrands] = useState([]);
@@ -44,11 +46,16 @@ export default function Admin() {
   const [brandFormData, setBrandFormData] = useState({ nama: '', logo: '' });
   const [brandImageFile, setBrandImageFile] = useState(null);
 
+  // Review state
+  const [reviews, setReviews] = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(true);
+
   useEffect(() => {
     fetchAnalytics();
     fetchProducts();
     fetchBrands();
     fetchOrders();
+    fetchReviews();
   }, []);
 
   const fetchAnalytics = async () => {
@@ -72,6 +79,18 @@ export default function Admin() {
       console.error('Error fetching orders:', error);
     } finally {
       setOrderLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      setReviewLoading(true);
+      const res = await api.get('/reviews');
+      setReviews(res.data);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -142,6 +161,20 @@ export default function Admin() {
     setSizes(sizes.filter((_, i) => i !== index));
   };
 
+  const handleEditSizeChange = (index, field, value) => {
+    const newSizes = [...editSizes];
+    newSizes[index][field] = Number(value);
+    setEditSizes(newSizes);
+  };
+
+  const addEditSizeField = () => {
+    setEditSizes([...editSizes, { ukuran: 41, stok: 0 }]);
+  };
+
+  const removeEditSizeField = (index) => {
+    setEditSizes(editSizes.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -210,7 +243,7 @@ export default function Admin() {
     ), { duration: Infinity, id: `delete-prod-${id}` });
   };
 
-  const openEditModal = (product) => {
+  const openEditModal = async (product) => {
     setEditFormData({
       id: product.id,
       nama: product.nama,
@@ -221,7 +254,20 @@ export default function Admin() {
       gambar: product.gambar || ''
     });
     setEditImageFile(null);
+    setEditSizes([]);
     setIsEditModalOpen(true);
+
+    try {
+      const res = await api.get(`/products/${product.id}`);
+      if (res.data.sizes && res.data.sizes.length > 0) {
+        setEditSizes(res.data.sizes);
+      } else {
+        setEditSizes([{ ukuran: 40, stok: 10 }]);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal memuat ukuran produk');
+    }
   };
 
   const handleEditSubmit = async (e) => {
@@ -239,6 +285,8 @@ export default function Admin() {
       } else {
         data.append('gambar', editFormData.gambar);
       }
+      
+      data.append('sizes', JSON.stringify(editSizes));
       
       await api.put(`/products/${editFormData.id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -346,6 +394,12 @@ export default function Admin() {
         >
           Orders
         </button>
+        <button 
+          onClick={() => setActiveTab('reviews')}
+          className={`pb-4 px-2 text-sm font-bold tracking-widest uppercase transition-colors ${activeTab === 'reviews' ? 'border-b-2 border-black text-black' : 'text-gray-400 hover:text-black'}`}
+        >
+          Reviews
+        </button>
       </div>
 
       {activeTab === 'overview' && (
@@ -354,20 +408,36 @@ export default function Admin() {
           {analyticsLoading ? (
             <div className="flex justify-center items-center h-40"><div className="animate-spin h-8 w-8 border-2 border-black border-t-transparent rounded-full"></div></div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col items-center justify-center text-center">
-                <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Total Revenue</p>
-                <h3 className="text-3xl font-black">Rp {analytics?.totalRevenue?.toLocaleString('id-ID')}</h3>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Total Revenue</p>
+                  <h3 className="text-3xl font-black">Rp {analytics?.totalRevenue?.toLocaleString('id-ID')}</h3>
+                </div>
+                <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Total Orders</p>
+                  <h3 className="text-3xl font-black">{analytics?.totalOrders}</h3>
+                </div>
+                <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Total Customers</p>
+                  <h3 className="text-3xl font-black">{analytics?.totalCustomers}</h3>
+                </div>
               </div>
-              <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col items-center justify-center text-center">
-                <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Total Orders</p>
-                <h3 className="text-3xl font-black">{analytics?.totalOrders}</h3>
+              <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 mt-8">
+                <h3 className="text-xs font-bold tracking-widest uppercase text-gray-500 mb-6">Revenue Overview (Last 6 Months)</h3>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analytics?.monthlySales || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eaeaea" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#888' }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 12, fill: '#888' }} axisLine={false} tickLine={false} tickFormatter={(value) => `Rp ${(value/1000000).toFixed(1)}M`} />
+                      <Tooltip formatter={(value) => [`Rp ${value.toLocaleString('id-ID')}`, 'Revenue']} contentStyle={{ borderRadius: '0px', border: '1px solid #eaeaea', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }} />
+                      <Line type="monotone" dataKey="sales" stroke="#000" strokeWidth={3} dot={{ r: 4, fill: '#000', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col items-center justify-center text-center">
-                <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Total Customers</p>
-                <h3 className="text-3xl font-black">{analytics?.totalCustomers}</h3>
-              </div>
-            </div>
+            </>
           )}
         </div>
       )}
@@ -680,6 +750,73 @@ export default function Admin() {
         </div>
       )}
 
+      {activeTab === 'reviews' && (
+        <div className="bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100">
+          <h2 className="text-sm font-bold tracking-[0.2em] uppercase mb-8 border-b border-gray-200 pb-4">Customer Reviews ({reviews.length})</h2>
+          
+          {reviewLoading ? (
+            <div className="flex justify-center items-center h-40"><div className="animate-spin h-8 w-8 border-2 border-black border-t-transparent rounded-full"></div></div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              <p>Belum ada ulasan yang masuk.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 text-xs font-bold tracking-widest uppercase text-gray-500">
+                    <th className="py-4 px-4 font-medium">Date</th>
+                    <th className="py-4 px-4 font-medium">Product</th>
+                    <th className="py-4 px-4 font-medium">Customer</th>
+                    <th className="py-4 px-4 font-medium">Rating</th>
+                    <th className="py-4 px-4 font-medium">Review</th>
+                    <th className="py-4 px-4 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.map((review) => (
+                    <motion.tr 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      key={review.id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="py-4 px-4 text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString('id-ID')}</td>
+                      <td className="py-4 px-4 text-sm font-bold uppercase tracking-wider">{review.nama_produk}</td>
+                      <td className="py-4 px-4 text-sm text-gray-600">{review.nama_user}</td>
+                      <td className="py-4 px-4 text-sm text-yellow-500">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</td>
+                      <td className="py-4 px-4 text-sm text-gray-600 max-w-[250px] truncate" title={review.komentar}>{review.komentar}</td>
+                      <td className="py-4 px-4 text-right">
+                        <button 
+                          onClick={() => {
+                            toast((t) => (
+                              <div className="flex flex-col items-center">
+                                <p className="mb-4 text-sm font-medium">Yakin ingin menghapus ulasan ini?</p>
+                                <div className="flex space-x-2">
+                                  <button onClick={async () => {
+                                      toast.dismiss(t.id);
+                                      try { await api.delete(`/reviews/${review.id}`); toast.success('Dihapus'); fetchReviews(); } 
+                                      catch (e) { toast.error('Gagal hapus'); }
+                                    }} className="bg-red-500 text-white px-4 py-2 rounded text-xs font-bold uppercase tracking-wider hover:bg-red-600">
+                                    Hapus
+                                  </button>
+                                  <button onClick={() => toast.dismiss(t.id)} className="bg-gray-200 text-black px-4 py-2 rounded text-xs font-bold uppercase tracking-wider hover:bg-gray-300">
+                                    Batal
+                                  </button>
+                                </div>
+                              </div>
+                            ), { duration: Infinity, id: `delete-review-${review.id}` });
+                          }} 
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                        ><Trash2 size={16} /></button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Edit Product Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto pt-24 pb-12">
@@ -745,6 +882,38 @@ export default function Admin() {
                 <textarea value={editFormData.deskripsi} onChange={(e) => setEditFormData({...editFormData, deskripsi: e.target.value})} rows="3"
                   className="w-full bg-white border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
                 ></textarea>
+              </div>
+
+              {/* Variasi Ukuran & Stok for Edit */}
+              <div className="pt-4 border-t border-gray-200 mt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <label className="block text-xs font-bold tracking-widest uppercase text-gray-500">Ukuran & Stok</label>
+                  <button type="button" onClick={addEditSizeField} className="text-xs font-bold text-black border border-black px-3 py-1 hover:bg-black hover:text-white transition-colors">
+                    + Add Size
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {editSizes.map((size, index) => (
+                    <div key={index} className="flex space-x-4 items-end bg-gray-50 p-4 border border-gray-100">
+                      <div className="w-1/2">
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-500 mb-1">Ukuran (EU)</label>
+                        <input type="number" value={size.ukuran} onChange={(e) => handleEditSizeChange(index, 'ukuran', e.target.value)} 
+                          className="w-full bg-white border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh: 40" />
+                      </div>
+                      <div className="w-1/2">
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-500 mb-1">Jumlah Stok</label>
+                        <input type="number" value={size.stok} onChange={(e) => handleEditSizeChange(index, 'stok', e.target.value)} 
+                          className="w-full bg-white border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh: 10" />
+                      </div>
+                      {editSizes.length > 1 && (
+                        <button type="button" onClick={() => removeEditSizeField(index)} className="text-red-500 hover:text-red-700 pb-2">
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-end space-x-4 pt-4 border-t">

@@ -69,6 +69,16 @@ const productController = {
     async update(req, res) {
         try {
             const { nama, brand, kategori, harga, deskripsi } = req.body;
+            let sizes = req.body.sizes;
+            
+            if (typeof sizes === 'string') {
+                try {
+                    sizes = JSON.parse(sizes);
+                } catch (e) {
+                    console.error('Error parsing sizes', e);
+                }
+            }
+
             let gambar = req.body.gambar || '';
             
             if (req.file) {
@@ -79,6 +89,14 @@ const productController = {
             }
 
             await ProductModel.update(req.params.id, { nama, brand, kategori, harga, deskripsi, gambar });
+
+            if (Array.isArray(sizes)) {
+                await ProductModel.deleteSizes(req.params.id);
+                for (const s of sizes) {
+                    await ProductModel.addSize(req.params.id, s.ukuran, s.stok);
+                }
+            }
+
             res.json({ message: 'Produk berhasil diupdate' });
         } catch (err) {
             console.error(err);

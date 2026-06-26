@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
@@ -11,17 +11,29 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
 
+  // Review state
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [komentar, setKomentar] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [user, setUser] = useState(null);
+
+  const fetchDetail = async () => {
+    try {
+      const res = await api.get(`/products/${id}`);
+      setProduct(res.data);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        const res = await api.get(`/products/${id}`);
-        setProduct(res.data);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try { setUser(JSON.parse(storedUser)); } catch (e) {}
+    }
     fetchDetail();
   }, [id]);
 
@@ -59,6 +71,35 @@ export default function ProductDetail() {
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Gagal menambahkan ke keranjang');
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Anda harus login untuk memberikan ulasan.');
+      return;
+    }
+    if (rating === 0) {
+      toast.error('Silakan pilih rating (bintang) terlebih dahulu.');
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      await api.post('/reviews', {
+        productId: product.id,
+        rating,
+        komentar
+      });
+      toast.success('Ulasan berhasil ditambahkan!');
+      setRating(0);
+      setKomentar('');
+      fetchDetail(); // Reload product detail to show the new review
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      toast.error(err.response?.data?.message || 'Gagal menambahkan ulasan.');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -148,6 +189,61 @@ export default function ProductDetail() {
             {/* Reviews Section */}
             <div className="border-t border-gray-200 pt-8 mt-12">
               <h2 className="text-xl font-black uppercase tracking-widest mb-6">Customer Reviews</h2>
+              
+              {/* Review Form */}
+              {user ? (
+                <form onSubmit={handleReviewSubmit} className="mb-8 bg-gray-50 p-6 border border-gray-100">
+                  <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Write a Review</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block text-xs text-gray-500 uppercase tracking-widest mb-2">Rating</label>
+                    <div className="flex space-x-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="focus:outline-none"
+                        >
+                          <Star 
+                            size={24} 
+                            fill={(hoverRating || rating) >= star ? "#FBBF24" : "none"} 
+                            color={(hoverRating || rating) >= star ? "#FBBF24" : "#D1D5DB"} 
+                            strokeWidth={1}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-xs text-gray-500 uppercase tracking-widest mb-2">Review</label>
+                    <textarea 
+                      value={komentar}
+                      onChange={(e) => setKomentar(e.target.value)}
+                      placeholder="Bagaimana pendapat Anda tentang produk ini?"
+                      rows="3"
+                      className="w-full bg-white border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={isSubmittingReview}
+                    className="bg-black text-white px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  >
+                    {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </form>
+              ) : (
+                <div className="mb-8 p-4 bg-gray-50 border border-gray-100 text-sm">
+                  Silakan <Link to="/login" className="font-bold underline">login</Link> untuk memberikan ulasan.
+                </div>
+              )}
+
               {product.reviews && product.reviews.length > 0 ? (
                 <div className="space-y-6 max-h-96 overflow-y-auto pr-4">
                   {product.reviews.map(review => (
